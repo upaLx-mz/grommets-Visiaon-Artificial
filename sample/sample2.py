@@ -1,5 +1,11 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from lib import analisys
 import cv2 as cv
 import numpy as np
+
 
 cap = cv.VideoCapture(0)
 if not cap.isOpened():
@@ -21,7 +27,8 @@ while True:
     if key == ord('q'):
         break
     elif key == ord('s'):
-        cv.imwrite("Captura.png", gray) 
+        cv.imwrite("Captura.png", gray)
+        analisys.analisis(gray)
     
     
 cap.release()
