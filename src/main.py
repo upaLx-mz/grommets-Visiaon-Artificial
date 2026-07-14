@@ -11,8 +11,11 @@ import cv2 as cv
 import numpy as np
 from lib import analisys
 from pathlib import Path
+from pymodbus.client import ModbusTcpClient
 
-def __init__():
+def main():
+    
+    PLC = ModbusTcpClient("127.0.0.1", port=502, timeout=3)
     
     ROOT = Path(__file__).resolve().parent.parent
     LOG_PATH = ROOT / "out" / "log.txt"
@@ -34,6 +37,12 @@ def __init__():
     )
     
     logging.info("Inicio del programa")
+    if PLC.connect():
+        logging.info("Conexion modbus exitosa")
+    else:
+        logging.info("Conexion modbus fallida")
+    
+    on = PLC.read_discrete_inputs(address=20, count=1)
     
     while 1:
         ret, frame = camara.read()
@@ -59,7 +68,8 @@ def __init__():
         if key == 27:
             logging.info("Fin del programa")
             break
-        elif key == ord('s'):
+        
+        if on == True:
             objeto1, resultado1 = analisys.analisisRGB(roi1)
             objeto2, resultado2 = analisys.analisisRGB(roi2)
             objeto3, resultado3 = analisys.analisisRGB(roi3)
@@ -72,14 +82,20 @@ def __init__():
             logging.info("------------------")
             
             if "NOK\n" in objetos or "Faltante\n" in objetos:
-                print("No pasa")
+                PLC.write_coil(address=18, value=False)
+                PLC.write_coil(address=19, value=True)
+                PLC.write_coil(address=20, value=True)
             else:
-                print("Si pasa")
+                PLC.write_coil(address=18, value=True)
+                PLC.write_coil(address=19, value=False)
+                PLC.write_coil(address=20, value=True)
             
         
         
     camara.release()
     cv.destroyAllWindows()
+    PLC.close()
     exit()
 
-__init__()
+if __name__ == "__main__":
+    main()
